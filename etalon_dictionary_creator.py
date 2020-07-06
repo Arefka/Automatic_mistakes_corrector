@@ -56,3 +56,5 @@ class DictionaryCreator:
             file_name = 'dictionary_of_etalon_words'
             self.save_file_of_etalon_dictionary(etalon_dictionary, file_name)
             print('The file creation is completed')
+        else:
+            print('There are no books in our folder')
