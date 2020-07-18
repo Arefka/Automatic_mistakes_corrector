@@ -4,6 +4,15 @@ import pymorphy2
 from datetime import timedelta, datetime
 import pickle
 
+'''
+=======================================================================
+
+    For correcting mistakes in a sentence:      
+        call MistakesCorrector().check_the_sentence('your sentence')   
+
+=======================================================================
+'''
+
 class MistakesCorrector:
     __full_file_path_to_the_words_friendly = os.path.dirname(__file__) + '/etalon_dictionary/words_friendly.pkl'
     __full_file_path_to_the_words_len = os.path.dirname(__file__) + '/etalon_dictionary/words_len.pkl'
@@ -200,7 +209,6 @@ class MistakesCorrector:
         return [True, output_word]
 
 
-# -- ACTION: --
     def check_the_sentence(self, input_sentence : str) -> [bool, str]:
 
         reg = re.compile('[^а-яА-Я]')
@@ -212,21 +220,14 @@ class MistakesCorrector:
         self.__neighboring_words_set.clear()
         user_sentence_dict = self.__create_dict_of_input_words(input_sentence.strip())
 
-        #TO_DO: need refactoring
-        all_words_at_one_char = True
-        for user_word in user_sentence_dict.keys():
-            if len(user_word) > 1:
-                all_words_at_one_char = False
-        if all_words_at_one_char:
+        if not ([user_word for user_word in user_sentence_dict if len(user_word) > 1]):
             return [False, input_sentence]
 
-        # Вариант для предложения из одного слова:
         if len(user_sentence_dict) == 1:
             if self.__word_is_in_etalon_words_set(input_sentence.strip().lower()):
                 return [False, input_sentence]
             return self.__find_nearest_word_in_set_of_all_words(input_sentence.strip().lower())
 
-        # проверка слов в предложении на корректность, формирование словаря:
         not_find_word_without_error = True
         for user_word in user_sentence_dict.keys():
             if len(user_word) == 1:
@@ -237,7 +238,6 @@ class MistakesCorrector:
             else:
                 user_sentence_dict[user_word] = ''
 
-        # Вариант, когда все слова с ошибкой:
         if not_find_word_without_error:
             for user_word in user_sentence_dict.keys():
                 new_word_constr = self.__find_nearest_word_in_set_of_all_words(user_word)
@@ -282,4 +282,3 @@ class MistakesCorrector:
         if error_marker:
             return [True, ' '.join(output_sentence_list)]
         return [False, input_sentence]
-
