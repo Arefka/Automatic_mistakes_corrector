@@ -20,8 +20,6 @@ class MistakesCorrector:
     __endtime = datetime.utcnow()
     __neighboring_words_set = set()
 
-    __username = 'test_user_name'
-
     def __init__(self):
         self.__loader()
 
@@ -34,6 +32,7 @@ class MistakesCorrector:
     def __load_obj(self, path_and_name):
         with open(path_and_name, 'rb') as f:
             return pickle.load(f)
+
 
     def __create_dict_of_input_words(self, input_sentence : str) -> {}:
         reg = re.compile('[^а-яА-Я -]')
@@ -55,6 +54,7 @@ class MistakesCorrector:
         return (first_word[-1] == second_word[-1]
                 and self.__morph.parse(first_word)[0].tag.POS == self.__morph.parse(second_word)[0].tag.POS)
 
+
     def __find_nearest_key_word(self, input_word : str) -> [bool, str]:
         typing_words = {
             'й':['ц', 'ы', 'ф'], 'ц':['й','ф','ы','в','у'], 'у':['ц','ы','в','а','к'], 'к':['у','в','а','п','е'],
@@ -68,17 +68,21 @@ class MistakesCorrector:
             'я':['ф','ы','ч'], 'ч':['я','ы','в','с'], 'с':['ч','в','а','м'], 'м':['с','а','п','и'], 'и':['м','п','р','т'],
             'т':['и','р','о','ь'], 'ь':['т','о','л','б'], 'б':['ь','л','д','ю'], 'ю':['б','д','ж']
         }
+
         for numer, origen_item in enumerate(input_word):
             for typing_item in typing_words[origen_item]:
                 if datetime.utcnow() > self.__endtime:
                     print('Timeout of SentenceCorrector')
                     return [False, input_word]
                 new_word = input_word[:numer] + typing_item + input_word[numer+1:]
+
                 if (self.__word_is_in_neighboring_words_set(new_word)
                         and self.__words_are_similar(input_word, new_word)):
                     self.__update_neighboring_words_set(new_word)
                     return [True, new_word]
+
         return [False, input_word]
+
 
     def __find_splitting_words(self, input_word : str) -> [bool, str, str]:
         if len(input_word) < 3:
@@ -90,13 +94,16 @@ class MistakesCorrector:
                 return [False, input_word, input_word]
             first_word = input_word[:numer]
             second_word = input_word[numer:]
+
             if (self.__word_is_in_neighboring_words_set(first_word)
                     and self.__word_is_in_neighboring_words_set(second_word)
                     and self.__words_are_similar(input_word, second_word)):
                 self.__update_neighboring_words_set(first_word)
                 self.__update_neighboring_words_set(second_word)
                 return [True, first_word, second_word]
+
         return [False, input_word, input_word]
+
 
     def __calculate_Damerau_Levenshtein_distance(self, firstWord: str, secondWord: str):
         d = {}
@@ -127,6 +134,7 @@ class MistakesCorrector:
                     d[(i, j)] = min(d[(i, j)], d[i - 2, j - 2] + cost)
 
         return d[lenghtWord1 - 1, lenghtWord2 - 1]
+
 
     def __find_nearest_word_in_neighboring_words_set(self, input_word: str) -> [bool, str]:
         left_limit = 1
@@ -166,6 +174,7 @@ class MistakesCorrector:
 
         self.__update_neighboring_words_set(output_word)
         return [True, output_word]
+
 
     def __find_nearest_word_in_set_of_all_words(self, input_word: str) -> [bool, str]:
         left_limit = 1
@@ -210,7 +219,6 @@ class MistakesCorrector:
 
 
     def check_the_sentence(self, input_sentence : str) -> [bool, str]:
-
         reg = re.compile('[^а-яА-Я]')
         if len(reg.sub('', input_sentence.lower().strip())) == 0:
             return [False, input_sentence]
@@ -241,6 +249,7 @@ class MistakesCorrector:
         if not_find_word_without_error:
             for user_word in user_sentence_dict.keys():
                 new_word_constr = self.__find_nearest_word_in_set_of_all_words(user_word)
+
                 if new_word_constr[0]:
                     user_sentence_dict[user_word] = new_word_constr[1]
                     not_find_word_without_error = False
@@ -253,14 +262,17 @@ class MistakesCorrector:
             if user_sentence_dict[user_word] == '':
                 not_find_new_good_word = True
                 new_word_constr = self.__find_nearest_key_word(user_word)
+
                 if new_word_constr[0]:
                     user_sentence_dict[user_word] = new_word_constr[1]
                     not_find_new_good_word = False
+
                 if not_find_new_good_word:
                     new_word_constr = self.__find_splitting_words(user_word)
                     if new_word_constr[0]:
                         user_sentence_dict[user_word] = new_word_constr[1] + ' ' + new_word_constr[2]
                         not_find_new_good_word = False
+
                 if not_find_new_good_word:
                     new_word_constr = self.__find_nearest_word_in_neighboring_words_set(user_word)
                     if new_word_constr[0]:
@@ -271,7 +283,9 @@ class MistakesCorrector:
         error_marker = False
 
         for user_word in user_sentence_dict.keys():
-            if (user_word.lower() != user_sentence_dict[user_word]) and (user_sentence_dict[user_word] != ''):
+            if ((user_word.lower() != user_sentence_dict[user_word])
+                    and (user_sentence_dict[user_word] != '')):
+
                 for num, item in enumerate(output_sentence_list):
                     item = item.lower()
                     clear_word = reg.sub('', item.strip())
